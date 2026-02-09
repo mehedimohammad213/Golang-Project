@@ -21,11 +21,17 @@ type UserService interface {
 }
 
 type userService struct {
-	repo repository.UserRepository
+	repo           repository.UserRepository
+	jwtSecret      string
+	jwtExpiryHours int
 }
 
-func NewUserService(repo repository.UserRepository) UserService {
-	return &userService{repo: repo}
+func NewUserService(repo repository.UserRepository, jwtSecret string, jwtExpiryHours int) UserService {
+	return &userService{
+		repo:           repo,
+		jwtSecret:      jwtSecret,
+		jwtExpiryHours: jwtExpiryHours,
+	}
 }
 
 func (s *userService) CreateUser(ctx context.Context, req dto.CreateUserRequest) (*dto.UserResponse, error) {
@@ -146,24 +152,34 @@ func (s *userService) Login(ctx context.Context, req dto.LoginRequest) (*dto.Log
 		return nil, err
 	}
 	if user == nil {
-		return nil, utils.ErrUnauthorized // Or Invalid Credentials
+		return nil, utils.ErrUnauthorized
+	}
+
+	if !user.IsActive {
+		return nil, utils.ErrUnauthorized
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
 		return nil, utils.ErrUnauthorized
 	}
 
-	// In a real app, generate JWT here
-	token := "dummy-jwt-token"
+	// Generate real JWT token
+	token, err := utils.GenerateToken(user.ID, s.jwtSecret, s.jwtExpiryHours)
+	if err != nil {
+		return nil, err
+	}
 
 	return &dto.LoginResponse{
 		Token: token,
 		User: dto.UserResponse{
-			ID:       user.ID,
-			Name:     user.Name,
-			Username: user.Username,
-			Email:    user.Email,
-			IsActive: user.IsActive,
+			ID:          user.ID,
+			Name:        user.Name,
+			Username:    user.Username,
+			Email:       user.Email,
+			IsActive:    user.IsActive,
+			LastLoginAt: user.LastLoginAt,
+			CreatedAt:   user.CreatedAt,
+			UpdatedAt:   user.UpdatedAt,
 		},
 	}, nil
 }

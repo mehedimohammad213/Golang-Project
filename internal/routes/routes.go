@@ -9,14 +9,13 @@ import (
 	"github.com/user/car-project/internal/middleware"
 	"github.com/user/car-project/internal/repository"
 	"github.com/user/car-project/internal/service"
-	"github.com/user/car-project/internal/utils"
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "github.com/user/car-project/docs"
 )
 
-func SetupRouter(jwtSecret string) *gin.Engine {
+func SetupRouter(jwtSecret string, jwtExpiryHours int) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	// In a real professional app, we'd add structured logging middleware here
@@ -31,13 +30,14 @@ func SetupRouter(jwtSecret string) *gin.Engine {
 
 	// Initialize Services
 	carService := service.NewCarService(carRepo)
-	userService := service.NewUserService(userRepo)
+	userService := service.NewUserService(userRepo, jwtSecret, jwtExpiryHours)
 	roleService := service.NewRoleService(roleRepo)
 	permService := service.NewPermissionService(permRepo)
 
 	// Initialize Handlers
 	carHandler := handlers.NewCarHandler(carService)
 	userHandler := handlers.NewUserHandler(userService)
+	authHandler := handlers.NewAuthHandler(userService)
 	roleHandler := handlers.NewRoleHandler(roleService)
 	permHandler := handlers.NewPermissionHandler(permService)
 
@@ -49,16 +49,8 @@ func SetupRouter(jwtSecret string) *gin.Engine {
 		})
 	})
 
-	// Login route for demo (should be improved with real auth)
-	r.POST("/login", func(c *gin.Context) {
-		// In a real app, you'd verify credentials here
-		token, err := utils.GenerateToken(1, jwtSecret, 24)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"token": token})
-	})
+	// Login route
+	r.POST("/login", authHandler.Login)
 
 	api := r.Group("/api/v1")
 	api.Use(middleware.AuthMiddleware(jwtSecret))

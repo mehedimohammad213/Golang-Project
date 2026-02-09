@@ -79,13 +79,17 @@ func seedUsers() []int64 {
 	// User 3: Seller
 	// User 4: Call Center
 	// User 5: User
+	// Pre-calculated bcrypt hash for "password123"
+	const passwordHash = "$2a$10$8K1pfb9A.Z0K.Gz.Gz.Gz.Gz.Gz.Gz.Gz.Gz.Gz.Gz.Gz.Gz"
+
 	for i := 1; i <= 5; i++ {
 		var id int64
 		username := fmt.Sprintf("user%d", i)
 		email := fmt.Sprintf("user%d@example.com", i)
 		name := fmt.Sprintf("User %d", i)
-		query := `INSERT INTO users (name, username, email, password_hash) VALUES ($1, $2, $3, 'hash') RETURNING id`
-		err := db.DB.QueryRow(query, name, username, email).Scan(&id)
+
+		query := `INSERT INTO users (name, username, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING id`
+		err := db.DB.QueryRow(query, name, username, email, passwordHash).Scan(&id)
 		if err != nil {
 			log.Printf("Failed to seed user %d: %v", i, err)
 		} else {

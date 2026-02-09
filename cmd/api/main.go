@@ -49,7 +49,7 @@ func main() {
 	}
 
 	// Setup routes
-	r := routes.SetupRouter(cfg.JWTSecret)
+	r := routes.SetupRouter(cfg.JWTSecret, cfg.JWTExpiryHours)
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.Port,

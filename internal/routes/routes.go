@@ -21,6 +21,7 @@ func SetupRouter(jwtSecret string) *gin.Engine {
 	r.Use(gin.Recovery())
 	// In a real professional app, we'd add structured logging middleware here
 	r.Use(gin.Logger())
+	r.Use(middleware.ETagMiddleware())
 
 	// Initialize Repositories
 	carRepo := repository.NewCarRepository(db.DB)

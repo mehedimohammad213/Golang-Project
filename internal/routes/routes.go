@@ -49,10 +49,13 @@ func SetupRouter(jwtSecret string, jwtExpiryHours int) *gin.Engine {
 		})
 	})
 
-	// Login route
-	r.POST("/login", authHandler.Login)
-
 	api := r.Group("/api/v1")
+	{
+		// Public routes in api/v1
+		api.POST("/login", authHandler.Login)
+	}
+
+	// Protected routes in api/v1
 	api.Use(middleware.AuthMiddleware(jwtSecret))
 	{
 		// User CRUD routes

@@ -29,9 +29,9 @@ func NewAuthHandler(svc service.UserService) AuthHandler {
 // @Produce json
 // @Param login body dto.LoginRequest true "Login Credentials"
 // @Success 200 {object} dto.LoginResponse
-// @Failure 401 {object} utils.ErrorResponse
-// @Failure 500 {object} utils.ErrorResponse
-// @Router /login [post]
+// @Failure 401 {object} utils.Response
+// @Failure 500 {object} utils.Response
+// @Router /api/v1/login [post]
 func (h *authHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

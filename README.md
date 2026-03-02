@@ -8,29 +8,29 @@ A professional RESTful API built with Go (Golang) for managing a car dealership 
   - JWT-based authentication
   - Role-Based Access Control (RBAC)
   - Permission-based endpoint protection
-  
+
 - **User Management**
   - User CRUD operations
   - Role assignment
   - Password hashing with bcrypt
-  
+
 - **Role & Permission System**
   - Dynamic role creation
   - Granular permissions
   - Role-to-user and permission-to-role mapping
-  
+
 - **Car Inventory Management**
   - Complete car CRUD operations
   - Car models, makes, and grades
   - Photo and document management
   - Stock tracking
-  
+
 - **Order & Payment System**
   - Order management
   - Purchase history tracking
   - Payment history and installments
   - Shopping cart functionality
-  
+
 - **API Documentation**
   - Interactive Swagger/OpenAPI documentation
   - Complete request/response schemas
@@ -149,7 +149,7 @@ A professional RESTful API built with Go (Golang) for managing a car dealership 
    ```bash
    # Create database
    createdb car_db
-   
+
    # Run schema
    psql -d car_db -f schema/schema.sql
    ```
@@ -247,7 +247,7 @@ http://localhost:8080
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/health` | Health check |
-| `POST` | `/login` | User login (returns JWT token) |
+| `POST` | `/api/v1/login` | User login (returns JWT token) |
 | `GET` | `/swagger/*any` | Swagger documentation UI |
 
 ### Protected Endpoints (Require Authentication)
@@ -301,7 +301,7 @@ All endpoints below require `Authorization: Bearer <token>` header.
 
 **Request:**
 ```bash
-curl -X POST http://localhost:8080/login \
+curl -X POST http://localhost:8080/api/v1/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "admin",
@@ -312,7 +312,21 @@ curl -X POST http://localhost:8080/login \
 **Response:**
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "message": "login successful",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": 1,
+      "name": "Admin User",
+      "username": "admin",
+      "email": "admin@example.com",
+      "is_active": true,
+      "last_login_at": "2026-02-08T12:00:00Z",
+      "created_at": "2026-02-01T09:00:00Z",
+      "updated_at": "2026-02-08T12:00:00Z"
+    }
+  },
+  "track_id": "d6c7f2a4-29c3-4f5e-a8a0-49f8ed8a9a10"
 }
 ```
 
@@ -404,7 +418,6 @@ Authorization: Bearer <token>
 **Response:**
 ```json
 {
-  "success": true,
   "message": "User created successfully",
   "data": {
     "id": 1,
@@ -414,7 +427,8 @@ Authorization: Bearer <token>
     "is_active": true,
     "created_at": "2026-02-08T12:00:00Z",
     "updated_at": "2026-02-08T12:00:00Z"
-  }
+  },
+  "track_id": "0b9cf5f0-54f7-4f57-95a3-38836f26c512"
 }
 ```
 
@@ -443,7 +457,6 @@ Authorization: Bearer <token>
 **Response:**
 ```json
 {
-  "success": true,
   "message": "Car created successfully",
   "data": {
     "id": 1,
@@ -453,10 +466,162 @@ Authorization: Bearer <token>
     "body_type": "Sedan",
     "year": 2024,
     "color": "Black",
+    "reg_year_month": "2024-01",
+    "mileage_km": 15000,
+    "engine_cc": 1800,
+    "fuel": "Petrol",
+    "transmission": "Automatic",
+    "drive": "FWD",
+    "seats": 5,
     "status": "available",
     "created_at": "2026-02-08T12:00:00Z",
     "updated_at": "2026-02-08T12:00:00Z"
-  }
+  },
+  "track_id": "3c1f5f0f-6f47-4c31-9cb5-bf6c6ac0f0e7"
+}
+```
+
+### List Cars
+
+**Request:**
+```bash
+GET /api/v1/cars
+Authorization: Bearer <token>
+```
+
+**Response:**
+```json
+{
+  "message": "Cars fetched successfully",
+  "data": [
+    {
+      "id": 1,
+      "model_id": 1,
+      "ref_no": "CAR-2026-001",
+      "package": "Premium",
+      "body_type": "Sedan",
+      "year": 2024,
+      "color": "Black",
+      "reg_year_month": "2024-01",
+      "mileage_km": 15000,
+      "engine_cc": 1800,
+      "fuel": "Petrol",
+      "transmission": "Automatic",
+      "drive": "FWD",
+      "seats": 5,
+      "status": "available",
+      "created_at": "2026-02-08T12:00:00Z",
+      "updated_at": "2026-02-08T12:00:00Z"
+    }
+  ],
+  "pagination": {
+    "current_page": 1,
+    "total_pages": 1,
+    "limit": 1,
+    "total_items": 1,
+    "links": {
+      "self": "/api/v1/cars"
+    }
+  },
+  "limit": 1,
+  "track_id": "3b3d0a8f-bcd3-4b0c-b0ef-8d8e3df9a103"
+}
+```
+
+### Get Car by ID
+
+**Request:**
+```bash
+GET /api/v1/cars/1
+Authorization: Bearer <token>
+```
+
+**Response:**
+```json
+{
+  "message": "Car fetched successfully",
+  "data": {
+    "id": 1,
+    "model_id": 1,
+    "ref_no": "CAR-2026-001",
+    "package": "Premium",
+    "body_type": "Sedan",
+    "year": 2024,
+    "color": "Black",
+    "reg_year_month": "2024-01",
+    "mileage_km": 15000,
+    "engine_cc": 1800,
+    "fuel": "Petrol",
+    "transmission": "Automatic",
+    "drive": "FWD",
+    "seats": 5,
+    "status": "available",
+    "created_at": "2026-02-08T12:00:00Z",
+    "updated_at": "2026-02-08T12:00:00Z"
+  },
+  "pagination": {
+    "current_page": 1,
+    "total_pages": 1,
+    "limit": 1,
+    "total_items": 1,
+    "links": {
+      "self": "/api/v1/cars/1"
+    }
+  },
+  "limit": 1,
+  "track_id": "1a0e3b0c-5b7a-4f55-9c7c-0ebfd1d3d244"
+}
+```
+
+### Update Car
+
+**Request:**
+```bash
+PUT /api/v1/cars/1
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "model_id": 1,
+  "ref_no": "CAR-2026-001",
+  "package": "Premium",
+  "body_type": "Sedan",
+  "year": 2024,
+  "color": "Black",
+  "reg_year_month": "2024-01",
+  "mileage_km": 15000,
+  "engine_cc": 1800,
+  "fuel": "Petrol",
+  "transmission": "Automatic",
+  "drive": "FWD",
+  "seats": 5,
+  "status": "available"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Car updated successfully",
+  "data": null,
+  "track_id": "f40d4f0a-4ad8-44c1-9c62-4e1d2484cd83"
+}
+```
+
+### Delete Car
+
+**Request:**
+```bash
+DELETE /api/v1/cars/1
+Authorization: Bearer <token>
+```
+
+**Response:**
+```json
+{
+  "message": "Car deleted successfully",
+  "data": null,
+  "track_id": "b75db21d-c8c2-41b5-9a77-9c1f9d3c00f3"
 }
 ```
 
@@ -477,9 +642,9 @@ Authorization: Bearer <token>
 **Response:**
 ```json
 {
-  "success": true,
   "message": "Role assigned successfully",
-  "data": null
+  "data": null,
+  "track_id": "6f0523e1-3a88-4b72-8b97-2e9501f8b9ad"
 }
 ```
 
@@ -498,9 +663,9 @@ The API uses standardized error responses:
 
 ```json
 {
-  "success": false,
   "message": "User not found",
-  "error": "record not found"
+  "error": "record not found",
+  "track_id": "a01e71c4-3fe8-4f71-9c53-c2427fb6756b"
 }
 ```
 

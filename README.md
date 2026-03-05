@@ -31,6 +31,11 @@ A professional RESTful API built with Go (Golang) for managing a car dealership 
   - Payment history and installments
   - Shopping cart functionality
 
+- **RAG (Retrieval-Augmented Generation)**
+  - Natural language Q&A over car inventory and details
+  - Vector search (pgvector) + OpenAI embeddings and chat
+  - Index cars via API; ask questions with semantic retrieval
+
 - **API Documentation**
   - Interactive Swagger/OpenAPI documentation
   - Complete request/response schemas
@@ -199,7 +204,7 @@ From the project root (so the `migrations` folder is found):
 go run ./cmd/migrate
 ```
 
-This applies all pending migrations using [golang-migrate](https://github.com/golang-migrate/migrate). The initial migration is in `migrations/000001_init_schema.up.sql` (mirrors `schema/schema.sql`). To roll back: use the migrate CLI or run a down migration programmatically.
+This applies all pending migrations using [golang-migrate](https://github.com/golang-migrate/migrate). The initial migration is in `migrations/000001_init_schema.up.sql` (mirrors `schema/schema.sql`). A second migration `000002_add_rag_vector` enables the **pgvector** extension and creates the `rag_chunks` table for RAG; ensure your PostgreSQL has [pgvector](https://github.com/pgvector/pgvector) installed (e.g. `apt install postgresql-16-pgvector` or use a Docker image that includes it). To roll back: use the migrate CLI or run a down migration programmatically.
 
 ### Run schema manually (alternative)
 
@@ -255,6 +260,12 @@ JWT_EXPIRY_HOURS=24
 
 # Server Configuration
 PORT=8080
+
+# RAG (optional) - enable /api/v1/rag/ask and /api/v1/rag/index/cars
+OPENAI_API_KEY=sk-...
+RAG_EMBEDDING_MODEL=text-embedding-3-small
+RAG_CHAT_MODEL=gpt-4o-mini
+RAG_TOP_K=5
 ```
 
 ## 📡 API Endpoints
@@ -316,6 +327,13 @@ All endpoints below require `Authorization: Bearer <token>` header.
 | `GET` | `/api/v1/cars/:id` | Get car by ID | `car-read` |
 | `PUT` | `/api/v1/cars/:id` | Update car | `car-update` |
 | `DELETE` | `/api/v1/cars/:id` | Delete car | `car-delete` |
+
+#### RAG (`/api/v1/rag`) – *only when `OPENAI_API_KEY` is set*
+
+| Method | Endpoint | Description | Permission Required |
+|--------|----------|-------------|---------------------|
+| `POST` | `/api/v1/rag/ask` | Ask a question (natural language over car data) | `rag-ask` |
+| `POST` | `/api/v1/rag/index/cars` | Re-index all cars into the RAG knowledge base | `rag-index` |
 
 ## 🔐 Authentication
 

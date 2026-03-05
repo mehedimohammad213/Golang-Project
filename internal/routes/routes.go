@@ -7,6 +7,7 @@ import (
 	"github.com/user/car-project/internal/db"
 	"github.com/user/car-project/internal/handlers"
 	"github.com/user/car-project/internal/middleware"
+	"github.com/user/car-project/internal/rag"
 	"github.com/user/car-project/internal/repository"
 	"github.com/user/car-project/internal/service"
 
@@ -15,7 +16,7 @@ import (
 	_ "github.com/user/car-project/docs"
 )
 
-func SetupRouter(jwtSecret string, jwtExpiryHours int) *gin.Engine {
+func SetupRouter(jwtSecret string, jwtExpiryHours int, openAIKey, ragEmbedModel, ragChatModel string, ragTopK int) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	// In a real professional app, we'd add structured logging middleware here
@@ -97,6 +98,21 @@ func SetupRouter(jwtSecret string, jwtExpiryHours int) *gin.Engine {
 			cars.GET("/:id", middleware.RequirePermission(permService, "car-read"), carHandler.GetCarByID)
 			cars.PUT("/:id", middleware.RequirePermission(permService, "car-update"), carHandler.UpdateCar)
 			cars.DELETE("/:id", middleware.RequirePermission(permService, "car-delete"), carHandler.DeleteCar)
+		}
+
+		// RAG routes (only when OpenAI API key is set)
+		if openAIKey != "" && db.DB != nil {
+			ragRepo := repository.NewRAGRepository(db.DB)
+			embedder := rag.NewOpenAIEmbedder(openAIKey, ragEmbedModel)
+			llm := rag.NewOpenAILLM(openAIKey, ragChatModel)
+			ragPipeline := rag.NewRAG(embedder, llm, ragRepo, ragTopK)
+			ragService := service.NewRAGService(ragPipeline)
+			ragHandler := handlers.NewRAGHandler(ragService)
+			ragGroup := api.Group("/rag")
+			{
+				ragGroup.POST("/ask", middleware.RequirePermission(permService, "rag-ask"), ragHandler.Ask)
+				ragGroup.POST("/index/cars", middleware.RequirePermission(permService, "rag-index"), ragHandler.IndexCars)
+			}
 		}
 	}
 

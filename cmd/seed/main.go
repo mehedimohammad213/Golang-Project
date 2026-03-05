@@ -124,7 +124,7 @@ func seedRoles() map[string]int64 {
 func seedPermissions() map[string]int64 {
 	log.Println("Seeding Permissions...")
 	perms := make(map[string]int64)
-	permNames := []string{"car-create", "car-read", "car-update", "car-delete"}
+	permNames := []string{"car-create", "car-read", "car-update", "car-delete", "rag-ask", "rag-index"}
 
 	for _, name := range permNames {
 		var id int64
@@ -171,12 +171,15 @@ func seedPermissionRole(perms map[string]int64, roles map[string]int64) {
 		assignPerm(roleID, perms["car-read"])
 		assignPerm(roleID, perms["car-update"])
 		assignPerm(roleID, perms["car-delete"])
+		assignPerm(roleID, perms["rag-ask"])
+		assignPerm(roleID, perms["rag-index"])
 	}
 
-	// Accountman & Call Center: Read Only
+	// Accountman & Call Center: Read Only + RAG ask
 	readOnlyRoles := []int64{roles["accountman"], roles["call center"]}
 	for _, roleID := range readOnlyRoles {
 		assignPerm(roleID, perms["car-read"])
+		assignPerm(roleID, perms["rag-ask"])
 	}
 }
 

@@ -13,6 +13,11 @@ type Config struct {
 	Port           string
 	JWTSecret      string
 	JWTExpiryHours int
+	// RAG / OpenAI
+	OpenAIAPIKey      string
+	RAGEmbeddingModel string
+	RAGChatModel      string
+	RAGTopK           int
 }
 
 func LoadConfig() *Config {
@@ -47,10 +52,30 @@ func LoadConfig() *Config {
 		}
 	}
 
+	openAIKey := os.Getenv("OPENAI_API_KEY")
+	ragEmbedModel := os.Getenv("RAG_EMBEDDING_MODEL")
+	if ragEmbedModel == "" {
+		ragEmbedModel = "text-embedding-3-small"
+	}
+	ragChatModel := os.Getenv("RAG_CHAT_MODEL")
+	if ragChatModel == "" {
+		ragChatModel = "gpt-4o-mini"
+	}
+	ragTopK := 5
+	if k := os.Getenv("RAG_TOP_K"); k != "" {
+		if val, err := strconv.Atoi(k); err == nil && val > 0 {
+			ragTopK = val
+		}
+	}
+
 	return &Config{
-		DBURL:          dbURL,
-		Port:           port,
-		JWTSecret:      jwtSecret,
-		JWTExpiryHours: jwtExpiryHours,
+		DBURL:             dbURL,
+		Port:              port,
+		JWTSecret:         jwtSecret,
+		JWTExpiryHours:    jwtExpiryHours,
+		OpenAIAPIKey:      openAIKey,
+		RAGEmbeddingModel: ragEmbedModel,
+		RAGChatModel:      ragChatModel,
+		RAGTopK:           ragTopK,
 	}
 }

@@ -1,1 +1,12 @@
 .env
+
+.env
+
+# Binaries (e.g. go build -o api ./cmd/api)
+/api
+/cmd/api/api
+/cmd/migrate/migrate
+/cmd/seed/seed
+
+/cmd/migrate/migrate
+/cmd/seed/seed

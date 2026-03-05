@@ -64,9 +64,18 @@ A professional RESTful API built with Go (Golang) for managing a car dealership 
 
 ```
 .
+├── schema/
+│   └── schema.sql               # Database schema (source of truth)
+├── migrations/
+│   ├── 000001_init_schema.up.sql   # Initial migration (applied by cmd/migrate)
+│   └── 000001_init_schema.down.sql # Rollback for initial migration
 ├── cmd/
-│   └── api/
-│       └── main.go              # Application entry point
+│   ├── api/
+│   │   └── main.go              # Application entry point
+│   ├── migrate/
+│   │   └── main.go              # Run database migrations
+│   └── seed/
+│       └── main.go              # Seed data (if any)
 ├── internal/
 │   ├── config/
 │   │   └── config.go            # Configuration management
@@ -150,8 +159,11 @@ A professional RESTful API built with Go (Golang) for managing a car dealership 
    # Create database
    createdb car_db
 
-   # Run schema
-   psql -d car_db -f schema/schema.sql
+   # Run migrations (from project root)
+   go run ./cmd/migrate
+
+   # Or apply schema manually with psql
+   # psql -d car_db -f schema/schema.sql
    ```
 
 5. **Install Swagger CLI (for documentation generation)**
@@ -179,7 +191,17 @@ The server will start on `http://localhost:8080`
 CREATE DATABASE car_db;
 ```
 
-### Run Schema
+### Run migrations
+
+From the project root (so the `migrations` folder is found):
+
+```bash
+go run ./cmd/migrate
+```
+
+This applies all pending migrations using [golang-migrate](https://github.com/golang-migrate/migrate). The initial migration is in `migrations/000001_init_schema.up.sql` (mirrors `schema/schema.sql`). To roll back: use the migrate CLI or run a down migration programmatically.
+
+### Run schema manually (alternative)
 
 ```bash
 psql -U postgres -d car_db -f schema/schema.sql

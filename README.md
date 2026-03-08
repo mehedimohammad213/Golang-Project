@@ -64,23 +64,30 @@ A professional RESTful API built with Go (Golang) for managing a car dealership 
 - **Validation:** go-playground/validator
 - **API Documentation:** Swaggo
 - **Environment Management:** godotenv
+- **Migrations:** golang-migrate/migrate
+- **RAG:** OpenAI API (embeddings + chat), pgvector (PostgreSQL extension)
 
 ## 📁 Project Structure
 
 ```
 .
 ├── schema/
-│   └── schema.sql               # Database schema (source of truth)
+│   └── schema.sql               # Database schema (source of truth, includes RAG)
 ├── migrations/
-│   ├── 000001_init_schema.up.sql   # Initial migration (applied by cmd/migrate)
-│   └── 000001_init_schema.down.sql # Rollback for initial migration
+│   ├── 000001_init_schema.up.sql
+│   ├── 000001_init_schema.down.sql
+│   ├── 000002_add_rag_vector.up.sql   # pgvector + rag_chunks
+│   └── 000002_add_rag_vector.down.sql
+├── scripts/
+│   ├── seed_10_per_table.sql    # Sample seed data
+│   └── truncate_all.sql         # Truncate tables (dev)
 ├── cmd/
 │   ├── api/
 │   │   └── main.go              # Application entry point
 │   ├── migrate/
 │   │   └── main.go              # Run database migrations
 │   └── seed/
-│       └── main.go              # Seed data (if any)
+│       └── main.go              # Seed data
 ├── internal/
 │   ├── config/
 │   │   └── config.go            # Configuration management
@@ -115,14 +122,17 @@ A professional RESTful API built with Go (Golang) for managing a car dealership 
 │   │   ├── role_service.go      # Role business logic
 │   │   ├── permission_service.go
 │   │   └── car_service.go       # Car business logic
+│   ├── rag/
+│   │   ├── embedder.go          # OpenAI embeddings
+│   │   ├── llm.go               # OpenAI chat
+│   │   ├── vector.go            # pgvector helpers
+│   │   └── rag.go               # RAG orchestration
 │   └── utils/
 │       ├── jwt.go               # JWT utilities
 │       ├── password.go          # Password hashing utilities
 │       ├── response.go          # Standardized API responses
 │       ├── logger.go            # Logging utilities
 │       └── errors.go            # Custom error definitions
-├── schema/
-│   └── schema.sql               # Database schema
 ├── docs/
 │   ├── docs.go                  # Swagger documentation (generated)
 │   ├── swagger.json             # Swagger JSON (generated)
@@ -137,7 +147,7 @@ A professional RESTful API built with Go (Golang) for managing a car dealership 
 ### Prerequisites
 
 - Go 1.24 or higher
-- PostgreSQL 12 or higher
+- PostgreSQL 12 or higher (with [pgvector](https://github.com/pgvector/pgvector) for RAG)
 - Git
 
 ### Installation
@@ -208,9 +218,19 @@ This applies all pending migrations using [golang-migrate](https://github.com/go
 
 ### Run schema manually (alternative)
 
+Applying `schema/schema.sql` directly creates all tables including RAG; ensure the **pgvector** extension is available (`CREATE EXTENSION IF NOT EXISTS vector;` may require superuser). For a clean setup, prefer migrations:
+
+```bash
+go run ./cmd/migrate
+```
+
+To apply the full schema file anyway:
+
 ```bash
 psql -U postgres -d car_db -f schema/schema.sql
 ```
+
+Note: If you use the schema file, run the vector extension first if your PostgreSQL has pgvector: `psql -d car_db -c 'CREATE EXTENSION IF NOT EXISTS vector;'`
 
 ### Database Tables
 
@@ -230,16 +250,25 @@ The system includes the following main tables:
   - `car_photos` - Car images
   - `car_grades` - Car condition grades
   - `car_details` - Detailed car information
+  - `car_sub_details` - Sub-details for car details
   - `documents` - Car documents
 
-- **Business Operations**
+- **LC & Purchase**
+  - `lcs` - Letters of credit
+  - `lc_cars` - LC-to-car mapping
+  - `lc_purchase_documents` - LC/purchase documents
+  - `currency_rates` - Currency exchange rates
+  - `purchase_history` - Purchase records (multi-currency)
+
+- **Orders & Payments**
   - `stocks` - Inventory stock
-  - `carts` - Shopping carts
   - `orders` - Customer orders
   - `order_items` - Order line items
-  - `purchase_history` - Purchase records
   - `payment_history` - Payment records
   - `installments` - Payment installments
+
+- **RAG**
+  - `rag_chunks` - Text chunks and embeddings for semantic search (pgvector)
 
 ## ⚙️ Environment Variables
 
@@ -731,6 +760,8 @@ Key dependencies (see `go.mod` for complete list):
 - `github.com/swaggo/gin-swagger` - Swagger integration
 - `github.com/joho/godotenv` - Environment variable management
 - `golang.org/x/crypto` - Cryptography (bcrypt)
+- `github.com/golang-migrate/migrate/v4` - Database migrations
+- `github.com/sashabaranov/go-openai` - OpenAI API client (RAG)
 
 ## 🤝 Contributing
 

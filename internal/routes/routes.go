@@ -19,7 +19,7 @@ import (
 func SetupRouter(jwtSecret string, jwtExpiryHours int, openAIKey, ragEmbedModel, ragChatModel string, ragTopK int) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
-	// In a real professional app, we'd add structured logging middleware here
+	r.Use(middleware.TrackIDMiddleware()) // track_id in context + response header; log every request so you can grep by track_id
 	r.Use(gin.Logger())
 	r.Use(middleware.ETagMiddleware())
 

@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/user/car-project/internal/utils"
 )
 
@@ -108,7 +107,7 @@ func (h *ExampleHandler) PaginatedSuccess(c *gin.Context) {
 		},
 	}
 
-	trackID := uuid.New().String()
+	trackID := utils.GetTrackID(c)
 	c.JSON(http.StatusOK, utils.Response{
 		Message:    "Items fetched successfully",
 		Data:       data,

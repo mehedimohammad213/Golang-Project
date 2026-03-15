@@ -10,8 +10,20 @@ import (
 )
 
 const (
-	DefaultPageSize = 10
+	DefaultPageSize   = 10
+	TrackIDContextKey = "track_id" // Set by middleware.TrackIDMiddleware; use GetTrackID(c) to read.
 )
+
+// GetTrackID returns the request's track_id from context (set by TrackIDMiddleware), or a new UUID if not set.
+// Use this so all responses for the same request share one track_id for logging/tracing.
+func GetTrackID(c *gin.Context) string {
+	if id, ok := c.Get(TrackIDContextKey); ok {
+		if s, ok := id.(string); ok {
+			return s
+		}
+	}
+	return uuid.New().String()
+}
 
 type ActionLink struct {
 	Rel    string `json:"rel"`
@@ -48,7 +60,7 @@ type Response struct {
 
 // SuccessResponse sends a successful JSON response
 func SuccessResponse(c *gin.Context, code int, message string, data interface{}) {
-	trackID := uuid.New().String()
+	trackID := GetTrackID(c)
 	resp := Response{
 		Message: message,
 		Data:    data,
@@ -73,7 +85,7 @@ func SuccessResponse(c *gin.Context, code int, message string, data interface{})
 
 // SuccessResponseWithHints sends a successful JSON response with hints
 func SuccessResponseWithHints(c *gin.Context, code int, message string, data interface{}, hints []string) {
-	trackID := uuid.New().String()
+	trackID := GetTrackID(c)
 	resp := Response{
 		Message: message,
 		Data:    data,
@@ -99,7 +111,7 @@ func SuccessResponseWithHints(c *gin.Context, code int, message string, data int
 
 // SuccessResponseWithLink sends a successful JSON response with a link
 func SuccessResponseWithLink(c *gin.Context, code int, message string, data interface{}, link string) {
-	trackID := uuid.New().String()
+	trackID := GetTrackID(c)
 	resp := Response{
 		Message: message,
 		Data:    data,
@@ -125,7 +137,7 @@ func SuccessResponseWithLink(c *gin.Context, code int, message string, data inte
 
 // PaginatedSuccessResponse sends a successful JSON response with pagination information
 func PaginatedSuccessResponse(c *gin.Context, code int, message string, data interface{}, pagination Pagination) {
-	trackID := uuid.New().String()
+	trackID := GetTrackID(c)
 	resp := Response{
 		Message:    message,
 		Data:       data,
@@ -138,7 +150,7 @@ func PaginatedSuccessResponse(c *gin.Context, code int, message string, data int
 
 // SuccessResponseWithLinks sends a successful JSON response with resource-level action links nested inside data
 func SuccessResponseWithLinks(c *gin.Context, code int, message string, data interface{}, links []ActionLink) {
-	trackID := uuid.New().String()
+	trackID := GetTrackID(c)
 
 	payload := gin.H{
 		"resource": data,
@@ -169,7 +181,7 @@ func SuccessResponseWithLinks(c *gin.Context, code int, message string, data int
 
 // PaginatedSuccessWithLinksResponse sends a successful JSON response with pagination and nested action links
 func PaginatedSuccessWithLinksResponse(c *gin.Context, code int, message string, data interface{}, pagination Pagination, links []ActionLink) {
-	trackID := uuid.New().String()
+	trackID := GetTrackID(c)
 
 	payload := gin.H{
 		"items": data,
@@ -189,7 +201,7 @@ func PaginatedSuccessWithLinksResponse(c *gin.Context, code int, message string,
 
 // ErrorResponse sends an error JSON response
 func ErrorResponse(c *gin.Context, code int, message string, err string) {
-	trackID := uuid.New().String()
+	trackID := GetTrackID(c)
 	c.JSON(code, Response{
 		Message: message,
 		Error:   err,
@@ -199,7 +211,7 @@ func ErrorResponse(c *gin.Context, code int, message string, err string) {
 
 // ErrorResponseWithHints sends an error JSON response with hints
 func ErrorResponseWithHints(c *gin.Context, code int, message string, err string, hints []string) {
-	trackID := uuid.New().String()
+	trackID := GetTrackID(c)
 	c.JSON(code, Response{
 		Message: message,
 		Error:   err,
@@ -210,7 +222,7 @@ func ErrorResponseWithHints(c *gin.Context, code int, message string, err string
 
 // ErrorResponseWithLink sends an error JSON response with a documentation link
 func ErrorResponseWithLink(c *gin.Context, code int, message string, err string, link string) {
-	trackID := uuid.New().String()
+	trackID := GetTrackID(c)
 	c.JSON(code, Response{
 		Message: message,
 		Error:   err,
@@ -221,7 +233,7 @@ func ErrorResponseWithLink(c *gin.Context, code int, message string, err string,
 
 // ValidationErrorResponse sends a validation error response with hints
 func ValidationErrorResponse(c *gin.Context, err error) {
-	trackID := uuid.New().String()
+	trackID := GetTrackID(c)
 	var errs []string
 	var hints []string
 
